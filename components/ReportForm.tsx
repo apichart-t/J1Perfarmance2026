@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Project, Report, User } from '../types';
-import { Save, UploadCloud } from 'lucide-react';
+import { Save, ExternalLink, User as UserIcon } from 'lucide-react';
 
 interface ReportFormProps {
   user: User;
@@ -21,7 +21,8 @@ const ReportForm: React.FC<ReportFormProps> = ({ user, projects, onSubmit }) => 
     next_plan: '',
     progress_percent: 0,
     problems: '',
-    note: ''
+    note: '',
+    recorder_name: '' // Will store in attachment_url
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,6 +30,10 @@ const ReportForm: React.FC<ReportFormProps> = ({ user, projects, onSubmit }) => 
     if (!formData.project_id) {
       alert("กรุณาเลือกโครงการ");
       return;
+    }
+    if (!formData.recorder_name.trim()) {
+        alert("กรุณาระบุชื่อผู้บันทึกข้อมูล");
+        return;
     }
 
     setLoading(true);
@@ -46,6 +51,8 @@ const ReportForm: React.FC<ReportFormProps> = ({ user, projects, onSubmit }) => 
       progress_percent: Number(formData.progress_percent),
       problems: formData.problems || '-',
       note: formData.note || '',
+      // บันทึกชื่อผู้บันทึกข้อมูลลงใน attachment_url ตามที่ได้รับมอบหมาย
+      attachment_url: formData.recorder_name, 
       created_at: new Date().toISOString()
     };
 
@@ -58,7 +65,8 @@ const ReportForm: React.FC<ReportFormProps> = ({ user, projects, onSubmit }) => 
       past_result: '',
       next_plan: '',
       problems: '',
-      note: ''
+      note: '',
+      recorder_name: ''
     }));
     alert("บันทึกข้อมูลเรียบร้อย");
   };
@@ -76,9 +84,9 @@ const ReportForm: React.FC<ReportFormProps> = ({ user, projects, onSubmit }) => 
   }
 
   return (
-    <div className="bg-slate-800 rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-4">
-        📝 บันทึกผลการดำเนินงาน
+    <div className="bg-slate-800 rounded-lg shadow-lg p-6 max-w-4xl mx-auto animate-fade-in-up">
+      <h2 className="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-4 flex items-center gap-2">
+        <Save className="text-emerald-500" /> บันทึกผลการดำเนินงาน
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -179,18 +187,47 @@ const ReportForm: React.FC<ReportFormProps> = ({ user, projects, onSubmit }) => 
           </div>
         </div>
 
-        {/* File Attachment */}
-        <div className="border border-dashed border-slate-600 rounded-lg p-6 text-center hover:bg-slate-900 transition-colors">
-            <UploadCloud className="mx-auto text-slate-400 mb-2 w-10 h-10" />
-            <p className="text-slate-300 mb-2">อัปโหลดไฟล์แนบ (PDF/รูปภาพ)</p>
-            <input type="file" className="text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700" />
-            <p className="text-xs text-slate-500 mt-2">ระบบจะบันทึกลง Google Drive อัตโนมัติ</p>
+        {/* File Link & Recorder Name */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+             {/* Recorder Name */}
+             <div className="bg-slate-900 p-4 rounded border border-slate-700">
+                <label className="block text-slate-300 text-sm mb-2 flex items-center gap-2">
+                    <UserIcon size={16} /> ผู้บันทึกข้อมูล (ยศ-ชื่อ-สกุล) <span className="text-red-400">*</span>
+                </label>
+                <input 
+                    type="text"
+                    required
+                    placeholder="เช่น ร.อ. รักชาติ ยิ่งชีพ"
+                    className="w-full bg-slate-800 border border-slate-600 rounded p-2.5 text-white outline-none focus:border-emerald-500"
+                    value={formData.recorder_name}
+                    onChange={e => setFormData({...formData, recorder_name: e.target.value})}
+                />
+                <p className="text-xs text-slate-500 mt-2">* ข้อมูลนี้จะถูกบันทึกเพื่อใช้อ้างอิง</p>
+             </div>
+
+             {/* Google Drive Link */}
+             <div className="bg-slate-900 p-4 rounded border border-slate-700 flex flex-col justify-center h-full">
+                <label className="block text-slate-300 text-sm mb-2">แนบไฟล์เอกสาร/รูปภาพ</label>
+                <div className="flex-1 flex flex-col items-center justify-center gap-3">
+                    <p className="text-xs text-slate-400 text-center">
+                        กรุณาอัปโหลดไฟล์ที่เกี่ยวข้องลงใน Google Drive ส่วนกลาง
+                    </p>
+                    <a 
+                        href="https://drive.google.com/drive/folders/1l4vwKinSMtlMUW_w3hrgbM5Gn0o6LNwp" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                    >
+                        <ExternalLink size={16} /> ไปที่ Google Drive
+                    </a>
+                </div>
+             </div>
         </div>
 
         <button 
           type="submit" 
           disabled={loading}
-          className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 transform active:scale-95 transition-all"
+          className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold py-3 rounded-lg shadow-lg flex justify-center items-center gap-2 transform active:scale-95 transition-all mt-6"
         >
           {loading ? 'กำลังบันทึก...' : <><Save /> ยืนยันการบันทึกข้อมูล</>}
         </button>
