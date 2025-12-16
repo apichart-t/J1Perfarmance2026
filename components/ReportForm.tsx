@@ -71,8 +71,16 @@ const ReportForm: React.FC<ReportFormProps> = ({ user, projects, onSubmit }) => 
     alert("บันทึกข้อมูลเรียบร้อย");
   };
 
-  const progressColor = formData.progress_percent < 30 ? 'bg-red-500' : 
-                        formData.progress_percent < 70 ? 'bg-yellow-500' : 'bg-green-500';
+  // Determine color based on progress percentage
+  // 0-20: Red, 21-49: Yellow, 50-99: Sky Blue, 100: Green
+  const getProgressColor = (percent: number) => {
+    if (percent === 100) return 'bg-emerald-500';
+    if (percent >= 50) return 'bg-sky-500';
+    if (percent > 20) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const progressColor = getProgressColor(formData.progress_percent);
 
   if (myProjects.length === 0) {
     return (
