@@ -4,7 +4,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
 import { 
-  LayoutDashboard, CheckCircle, Clock, FileText, Filter, Calendar 
+  LayoutDashboard, CheckCircle, Clock, FileText, Filter, Calendar,
+  PieChart as PieChartIcon,
+  BarChart as BarChartIcon
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -124,6 +126,13 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
       ? projects.filter(p => p.unit_name === selectedUnit)
       : projects;
   }, [projects, selectedUnit]);
+
+  const getBarColor = (p: number) => {
+    if (p === 100) return '#10b981'; // emerald-500
+    if (p >= 50) return '#0ea5e9'; // sky-500
+    if (p > 20) return '#eab308'; // yellow-500
+    return '#ef4444'; // red-500
+  };
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -253,7 +262,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
         {/* Pie Chart: Status Distribution */}
         <div className="bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <PieChart size={20} className="text-slate-400" />
+            <PieChartIcon size={20} className="text-slate-400" />
             สัดส่วนสถานะโครงการ
           </h3>
           <div className="h-64">
@@ -286,7 +295,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
         {/* Bar Chart: Progress per Project */}
         <div className="bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <BarChart size={20} className="text-slate-400" />
+            <BarChartIcon size={20} className="text-slate-400" />
             ความคืบหน้ารายโครงการ
           </h3>
           <div className="h-64 overflow-y-auto pr-2 custom-scrollbar">
@@ -316,7 +325,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
                   />
                   <Bar dataKey="progress" radius={[0, 4, 4, 0]} name="ความคืบหน้า (%)">
                     {stats.projectProgress.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.progress === 100 ? '#10b981' : '#3b82f6'} />
+                      <Cell key={`cell-${index}`} fill={getBarColor(entry.progress)} />
                     ))}
                   </Bar>
                 </BarChart>
