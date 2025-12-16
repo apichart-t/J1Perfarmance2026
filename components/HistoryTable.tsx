@@ -54,6 +54,14 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ user, reports, onDelete }) 
     window.print();
   };
 
+  // 0-20: Red, 21-49: Yellow, 50-99: Sky Blue, 100: Green
+  const getProgressBadgeColor = (p: number) => {
+    if (p === 100) return 'bg-green-900 text-green-300';
+    if (p >= 50) return 'bg-sky-900 text-sky-300';
+    if (p > 20) return 'bg-yellow-900 text-yellow-300';
+    return 'bg-red-900 text-red-300';
+  };
+
   return (
     <div className="bg-slate-800 rounded-lg shadow-lg p-6 animate-fade-in-up">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -99,10 +107,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ user, reports, onDelete }) 
                   {report.past_result}
                 </td>
                 <td className="p-3 text-center align-top">
-                  <span className={`px-2 py-1 rounded text-xs font-bold inline-block ${
-                    report.progress_percent === 100 ? 'bg-green-900 text-green-300' : 
-                    report.progress_percent > 50 ? 'bg-blue-900 text-blue-300' : 'bg-red-900 text-red-300'
-                  }`}>
+                  <span className={`px-2 py-1 rounded text-xs font-bold inline-block ${getProgressBadgeColor(report.progress_percent)}`}>
                     {report.progress_percent}%
                   </span>
                 </td>
