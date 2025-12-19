@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Project, Report, Role } from '../types';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList 
 } from 'recharts';
 import { 
   LayoutDashboard, CheckCircle, Clock, FileText, Filter, Calendar,
@@ -22,7 +22,6 @@ const UNITS = ["กนผ.สนผพ.กพ.ทหาร", "กกล.กพ.�
 const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, userRole }) => {
   
   // --- State สำหรับตัวกรอง ---
-  // ถ้า unitFilter เป็น 'ALL' แสดงว่าเลือกได้ (Admin) แต่ถ้าระบุมาให้ล็อคค่าไว้
   const [selectedUnit, setSelectedUnit] = useState<string>(unitFilter);
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
@@ -43,52 +42,38 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
     // 2. กรอง Reports ตามเงื่อนไขทั้งหมด (Unit, Project, Date)
     let filteredReports = reports;
 
-    // 2.1 กรองตาม Unit
     if (selectedUnit && selectedUnit !== 'ALL') {
       filteredReports = filteredReports.filter(r => r.unit_name === selectedUnit);
     }
     
-    // 2.2 กรองตาม Project (ถ้าเลือกเจาะจง)
     if (selectedProject) {
       filteredReports = filteredReports.filter(r => r.project_id === selectedProject);
-      // ถ้าเลือก Project เดียว ให้ projects ที่แสดงเหลือแค่อันเดียวด้วย เพื่อให้กราฟ Bar ไม่รก
-      // (หรือจะปล่อย projects ทั้งหมดไว้ก็ได้ แล้วแต่ Design) - ในที่นี้ขอเลือกแสดงเฉพาะที่เลือก
     }
 
-    // 2.3 กรองตาม Date Range
     if (startDate) {
       filteredReports = filteredReports.filter(r => new Date(r.report_date) >= new Date(startDate));
     }
     if (endDate) {
-      // ตั้งเวลาให้เป็นสิ้นวัน (23:59:59) ของวันที่เลือก
       const endDateTime = new Date(endDate);
       endDateTime.setHours(23, 59, 59, 999);
       filteredReports = filteredReports.filter(r => new Date(r.report_date) <= endDateTime);
     }
 
-    // --- Calculations ---
-    // จำนวน Project ที่จะนำมาคำนวณ (ถ้าเลือก Project เฉพาะ ก็เอาแค่ Project นั้น)
     const targetProjects = selectedProject 
       ? filteredProjects.filter(p => p.project_id === selectedProject)
       : filteredProjects;
 
     const totalProjects = targetProjects.length;
-    const totalReports = filteredReports.length; // จำนวนรายงานที่ส่งในช่วงเวลานั้น
+    const totalReports = filteredReports.length;
     
-    // คำนวณความคืบหน้าล่าสุด (Latest Progress) ภายใต้เงื่อนไขตัวกรอง
-    // หมายเหตุ: หากกรองช่วงเวลา จะเป็นการดูว่า "ณ ช่วงเวลานั้น หรือ รายงานล่าสุดในช่วงเวลานั้น" มีสถานะเป็นอย่างไร
     const projectProgress = targetProjects.map(p => {
-      // หารายงานของ Project นี้ ที่ผ่านการกรองมาแล้ว
       const pReports = filteredReports.filter(r => r.project_id === p.project_id);
-      
-      // เรียงวันที่ล่าสุดขึ้นก่อน
       pReports.sort((a, b) => new Date(b.report_date).getTime() - new Date(a.report_date).getTime());
-      
-      // เอาค่าล่าสุดในช่วงเวลานั้น
       const currentProgress = pReports.length > 0 ? pReports[0].progress_percent : 0;
       
       return {
-        name: p.project_name.length > 20 ? p.project_name.substring(0, 20) + '...' : p.project_name,
+        // Show full name here
+        name: p.project_name,
         full_name: p.project_name,
         progress: currentProgress,
         status: currentProgress === 100 ? 'Completed' : (currentProgress > 0 ? 'In Progress' : 'Not Started')
@@ -97,13 +82,10 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
 
     const completedProjects = projectProgress.filter(p => p.progress === 100).length;
     
-    // หาค่าเฉลี่ย (คิดเฉพาะ Project ที่มีการเคลื่อนไหวในช่วงเวลานั้น หรือจะหารทั้งหมดก็ได้)
-    // สูตรนี้หารด้วยจำนวน Project ทั้งหมดที่แสดงอยู่
     const avgProgress = projectProgress.length > 0 
       ? projectProgress.reduce((acc, curr) => acc + curr.progress, 0) / projectProgress.length 
       : 0;
 
-    // Status Distribution
     const statusCount = [
       { name: 'เสร็จสิ้น', value: projectProgress.filter(p => p.status === 'Completed').length },
       { name: 'กำลังดำเนินการ', value: projectProgress.filter(p => p.status === 'In Progress').length },
@@ -120,7 +102,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
     };
   }, [projects, reports, selectedUnit, selectedProject, startDate, endDate]);
 
-  // Dropdown Options: แสดงเฉพาะ Project ที่อยู่ใน Unit ที่เลือก
   const availableProjects = useMemo(() => {
     return selectedUnit && selectedUnit !== 'ALL'
       ? projects.filter(p => p.unit_name === selectedUnit)
@@ -135,7 +116,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
   };
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-6 animate-fade-in-up pb-10">
       {/* --- Filter Section --- */}
       <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-sm">
         <div className="flex items-center space-x-2 mb-4 text-emerald-400">
@@ -144,16 +125,15 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* 1. Unit Filter */}
           <div>
             <label className="block text-xs text-slate-400 mb-1">หน่วยงาน</label>
             <select
               className="w-full bg-slate-900 border border-slate-600 rounded-lg text-white p-2.5 text-sm focus:border-emerald-500 outline-none disabled:opacity-50"
               value={selectedUnit}
-              disabled={unitFilter !== 'ALL'} // ถ้า User Login มาแล้วไม่ใช่ Admin ให้ห้ามแก้
+              disabled={unitFilter !== 'ALL'}
               onChange={(e) => {
                 setSelectedUnit(e.target.value);
-                setSelectedProject(''); // Reset Project เมื่อเปลี่ยน Unit
+                setSelectedProject('');
               }}
             >
               <option value="ALL">ทุกหน่วยงาน</option>
@@ -161,7 +141,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             </select>
           </div>
 
-          {/* 2. Project Filter */}
           <div>
             <label className="block text-xs text-slate-400 mb-1">แผนงาน/โครงการ</label>
             <select
@@ -178,7 +157,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             </select>
           </div>
 
-          {/* 3. Start Date */}
           <div className="relative">
             <label className="block text-xs text-slate-400 mb-1">ตั้งแต่วันที่</label>
             <div className="relative">
@@ -192,7 +170,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             </div>
           </div>
 
-          {/* 4. End Date */}
           <div className="relative">
             <label className="block text-xs text-slate-400 mb-1">ถึงวันที่</label>
             <div className="relative">
@@ -258,9 +235,9 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
       </div>
 
       {/* --- Charts Row --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Pie Chart: Status Distribution */}
-        <div className="bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700">
+        <div className="lg:col-span-4 bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700 h-fit">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <PieChartIcon size={20} className="text-slate-400" />
             สัดส่วนสถานะโครงการ
@@ -292,45 +269,69 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
           </div>
         </div>
 
-        {/* Bar Chart: Progress per Project */}
-        <div className="bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700">
+        {/* Bar Chart: Progress per Project (Expanded Overview) */}
+        <div className="lg:col-span-8 bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <BarChartIcon size={20} className="text-slate-400" />
-            ความคืบหน้ารายโครงการ
+            ความคืบหน้ารายโครงการ (ทั้งหมด)
           </h3>
-          <div className="h-64 overflow-y-auto pr-2 custom-scrollbar">
-            {/* ถ้า Project เยอะเกินไป ให้ขยายความสูง Container เพื่อให้กราฟไม่เบียด */}
-            <div style={{ height: Math.max(300, stats.projectProgress.length * 40) }}>
+          
+          {/* Scrollable container for many projects */}
+          <div className="h-[500px] overflow-y-auto pr-2 custom-scrollbar border border-slate-700/50 rounded bg-slate-900/50">
+            <div style={{ height: Math.max(480, stats.projectProgress.length * 50) }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={stats.projectProgress} 
                   layout="vertical" 
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  margin={{ top: 20, right: 60, left: 10, bottom: 20 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={true} vertical={true} />
-                  <XAxis type="number" domain={[0, 100]} stroke="#94a3b8" />
+                  <XAxis type="number" domain={[0, 100]} stroke="#94a3b8" tick={{fill: '#94a3b8', fontSize: 12}} />
                   <YAxis 
                     dataKey="name" 
                     type="category" 
-                    width={120} 
+                    width={300} // Increased width for full names
                     stroke="#94a3b8" 
-                    fontSize={12} 
-                    tick={{fill: '#94a3b8'}}
+                    fontSize={11} 
+                    tick={{fill: '#cbd5e1'}}
                   />
                   <Tooltip 
                     cursor={{fill: '#334155', opacity: 0.4}}
-                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
+                    contentStyle={{ 
+                      backgroundColor: '#1e293b', 
+                      border: '1px solid #334155', 
+                      borderRadius: '8px', 
+                      color: '#fff',
+                      fontSize: '12px',
+                      maxWidth: '400px',
+                      whiteSpace: 'normal'
+                    }}
                     formatter={(value: number) => [`${value}%`, 'ความคืบหน้า']}
-                    labelStyle={{ color: '#cbd5e1' }}
+                    labelStyle={{ color: '#emerald-400', fontWeight: 'bold', marginBottom: '4px' }}
                   />
-                  <Bar dataKey="progress" radius={[0, 4, 4, 0]} name="ความคืบหน้า (%)">
+                  <Bar dataKey="progress" radius={[0, 4, 4, 0]} name="ความคืบหน้า (%)" barSize={24}>
                     {stats.projectProgress.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getBarColor(entry.progress)} />
                     ))}
+                    <LabelList 
+                      dataKey="progress" 
+                      position="right" 
+                      fill="#fff" 
+                      fontSize={11} 
+                      fontWeight="bold"
+                      formatter={(val: number) => `${val}%`} 
+                      offset={10}
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400 justify-center">
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500"></span> 0-20% (วิกฤต)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-yellow-500"></span> 21-49% (ล่าช้า)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-sky-500"></span> 50-99% (ปกติ)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500"></span> 100% (สำเร็จ)</div>
           </div>
         </div>
       </div>
