@@ -328,10 +328,10 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400 justify-center">
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500"></span> 0-20% (วิกฤต)</div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-yellow-500"></span> 21-49% (ล่าช้า)</div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-sky-500"></span> 50-99% (ปกติ)</div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500"></span> 100% (สำเร็จ)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500"></span> 0-20% </div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-yellow-500"></span> 21-49% </div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-sky-500"></span> 50-99% </div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500"></span> 100% </div>
           </div>
         </div>
       </div>
