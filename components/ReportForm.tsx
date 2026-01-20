@@ -72,11 +72,11 @@ const ReportForm: React.FC<ReportFormProps> = ({ user, projects, onSubmit }) => 
   };
 
   // Determine color based on progress percentage
-  // 0-20: Red, 21-49: Yellow, 50-99: Sky Blue, 100: Green
+  // 91-100: Green, 51-90: Blue, 21-50: Yellow, 0-20: Red
   const getProgressColor = (percent: number) => {
-    if (percent === 100) return 'bg-emerald-500';
-    if (percent >= 50) return 'bg-sky-500';
-    if (percent > 20) return 'bg-yellow-500';
+    if (percent >= 91) return 'bg-emerald-500';
+    if (percent >= 51) return 'bg-blue-500';
+    if (percent >= 21) return 'bg-yellow-500';
     return 'bg-red-500';
   };
 
