@@ -54,11 +54,11 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ user, reports, onDelete }) 
     window.print();
   };
 
-  // 0-20: Red, 21-49: Yellow, 50-99: Sky Blue, 100: Green
+  // 91-100: Green, 51-90: Blue, 21-50: Yellow, 0-20: Red
   const getProgressBadgeColor = (p: number) => {
-    if (p === 100) return 'bg-green-900 text-green-300';
-    if (p >= 50) return 'bg-sky-900 text-sky-300';
-    if (p > 20) return 'bg-yellow-900 text-yellow-300';
+    if (p >= 91) return 'bg-green-900 text-green-300';
+    if (p >= 51) return 'bg-blue-900 text-blue-300';
+    if (p >= 21) return 'bg-yellow-900 text-yellow-300';
     return 'bg-red-900 text-red-300';
   };
 
