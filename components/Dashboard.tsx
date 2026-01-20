@@ -76,20 +76,20 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
         name: p.project_name,
         full_name: p.project_name,
         progress: currentProgress,
-        status: currentProgress === 100 ? 'Completed' : (currentProgress > 0 ? 'In Progress' : 'Not Started')
+        status: currentProgress >= 91 ? 'Completed' : (currentProgress >= 21 ? 'In Progress' : 'Not Started')
       };
     });
 
-    const completedProjects = projectProgress.filter(p => p.progress === 100).length;
+    const completedProjects = projectProgress.filter(p => p.progress >= 91).length;
     
     const avgProgress = projectProgress.length > 0 
       ? projectProgress.reduce((acc, curr) => acc + curr.progress, 0) / projectProgress.length 
       : 0;
 
     const statusCount = [
-      { name: 'เสร็จสิ้น', value: projectProgress.filter(p => p.status === 'Completed').length },
-      { name: 'กำลังดำเนินการ', value: projectProgress.filter(p => p.status === 'In Progress').length },
-      { name: 'ยังไม่เริ่ม', value: projectProgress.filter(p => p.status === 'Not Started').length },
+      { name: 'เสร็จสิ้น (91-100%)', value: projectProgress.filter(p => p.progress >= 91).length },
+      { name: 'อยู่ระหว่างดำเนินการ (21-90%)', value: projectProgress.filter(p => p.progress >= 21 && p.progress <= 90).length },
+      { name: 'ยังไม่เริ่ม/ต่ำกว่าเป้า (0-20%)', value: projectProgress.filter(p => p.progress <= 20).length },
     ];
 
     return {
@@ -108,10 +108,11 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
       : projects;
   }, [projects, selectedUnit]);
 
+  // 91-100: Green, 51-90: Blue, 21-50: Yellow, 0-20: Red
   const getBarColor = (p: number) => {
-    if (p === 100) return '#10b981'; // emerald-500
-    if (p >= 50) return '#0ea5e9'; // sky-500
-    if (p > 20) return '#eab308'; // yellow-500
+    if (p >= 91) return '#10b981'; // green-500
+    if (p >= 51) return '#3b82f6'; // blue-500
+    if (p >= 21) return '#eab308'; // yellow-500
     return '#ef4444'; // red-500
   };
 
@@ -202,7 +203,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             <div>
               <p className="text-slate-400 text-sm">เสร็จสมบูรณ์</p>
               <h3 className="text-2xl font-bold text-white">{stats.completedProjects}</h3>
-              <p className="text-xs text-slate-500 mt-1">โครงการ (100%)</p>
+              <p className="text-xs text-slate-500 mt-1">โครงการ (>= 91%)</p>
             </div>
             <CheckCircle className="text-green-500 w-8 h-8" />
           </div>
@@ -328,10 +329,10 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400 justify-center">
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500"></span> 0-20% </div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-yellow-500"></span> 21-49% </div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-sky-500"></span> 50-99% </div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500"></span> 100% </div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500"></span> 0-20% (วิกฤต/ต่ำกว่าเกณฑ์)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-yellow-500"></span> 21-50% (ระหว่างดำเนินการ)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-blue-500"></span> 51-90% (ดำเนินการต่อเนื่อง)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500"></span> 91-100% (แล้วเสร็จ)</div>
           </div>
         </div>
       </div>
