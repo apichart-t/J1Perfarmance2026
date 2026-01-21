@@ -335,7 +335,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400 justify-center">
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#ef4444]"></span> 0-20% (วิกฤต/ต่ำกว่าเกณฑ์)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#ef4444]"></span> 0-20% (ต่ำกว่าเกณฑ์)</div>
             <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#eab308]"></span> 21-50% (อยู่ระหว่างดำเนินการ)</div>
             <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#3b82f6]"></span> 51-90% (ดำเนินการต่อเนื่อง)</div>
             <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#10b981]"></span> 91-100% (แล้วเสร็จ)</div>
