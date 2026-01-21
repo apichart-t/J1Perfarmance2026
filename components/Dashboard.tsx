@@ -16,7 +16,14 @@ interface DashboardProps {
   userRole?: Role;    // ส่งเข้ามาเพื่อเช็คว่าเป็น Admin หรือไม่ (ถ้าไม่ส่งมาจะเช็คจาก unitFilter เอา)
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+// Map status names to specific colors to ensure consistency
+const STATUS_COLORS: Record<string, string> = {
+  'แล้วเสร็จ (91-100%)': '#10b981',      // Green
+  'ดำเนินงานต่อเนื่อง (51-90%)': '#3b82f6', // Blue
+  'อยู่ระหว่างดำเนินการ (21-50%)': '#eab308', // Yellow
+  'ต่ำกว่าเกณฑ์ (0-20%)': '#ef4444'   // Red
+};
+
 const UNITS = ["กนผ.สนผพ.กพ.ทหาร", "กกล.กพ.ทหาร", "กบพ.กพ.ทหาร", "กปค.กพ.ทหาร", "กจก.กพ.ทหาร", "กทด.สนผพ.กพ.ทหาร", "กพพ.กพ.ทหาร", "กพบท.กพ.ทหาร", "กคง.สนผพ.กพ.ทหาร"];
 
 const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, userRole }) => {
@@ -72,11 +79,9 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
       const currentProgress = pReports.length > 0 ? pReports[0].progress_percent : 0;
       
       return {
-        // Show full name here
         name: p.project_name,
         full_name: p.project_name,
         progress: currentProgress,
-        status: currentProgress >= 91 ? 'Completed' : (currentProgress >= 21 ? 'In Progress' : 'Not Started')
       };
     });
 
@@ -86,11 +91,13 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
       ? projectProgress.reduce((acc, curr) => acc + curr.progress, 0) / projectProgress.length 
       : 0;
 
+    // Updated Status Count with 4 ranges
     const statusCount = [
-      { name: 'เสร็จสิ้น (91-100%)', value: projectProgress.filter(p => p.progress >= 91).length },
-      { name: 'อยู่ระหว่างดำเนินการ (21-90%)', value: projectProgress.filter(p => p.progress >= 21 && p.progress <= 90).length },
-      { name: 'ยังไม่เริ่ม/ต่ำกว่าเป้า (0-20%)', value: projectProgress.filter(p => p.progress <= 20).length },
-    ];
+      { name: 'แล้วเสร็จ (91-100%)', value: projectProgress.filter(p => p.progress >= 91).length },
+      { name: 'ดำเนินงานต่อเนื่อง (51-90%)', value: projectProgress.filter(p => p.progress >= 51 && p.progress <= 90).length },
+      { name: 'อยู่ระหว่างดำเนินการ (21-50%)', value: projectProgress.filter(p => p.progress >= 21 && p.progress <= 50).length },
+      { name: 'ต่ำกว่าเกณฑ์ (0-20%)', value: projectProgress.filter(p => p.progress <= 20).length },
+    ].filter(item => item.value > 0); // Only show statuses that have projects
 
     return {
       totalProjects,
@@ -108,12 +115,12 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
       : projects;
   }, [projects, selectedUnit]);
 
-  // 91-100: Green, 51-90: Blue, 21-50: Yellow, 0-20: Red
+  // Updated logic to match the 4-color request
   const getBarColor = (p: number) => {
-    if (p >= 91) return '#10b981'; // green-500
-    if (p >= 51) return '#3b82f6'; // blue-500
-    if (p >= 21) return '#eab308'; // yellow-500
-    return '#ef4444'; // red-500
+    if (p >= 91) return STATUS_COLORS['แล้วเสร็จ (91-100%)'];
+    if (p >= 51) return STATUS_COLORS['ดำเนินงานต่อเนื่อง (51-90%)'];
+    if (p >= 21) return STATUS_COLORS['อยู่ระหว่างดำเนินการ (21-50%)'];
+    return STATUS_COLORS['ต่ำกว่าเกณฑ์ (0-20%)'];
   };
 
   return (
@@ -129,7 +136,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
           <div>
             <label className="block text-xs text-slate-400 mb-1">หน่วยงาน</label>
             <select
-              className="w-full bg-slate-900 border border-slate-600 rounded-lg text-white p-2.5 text-sm focus:border-emerald-500 outline-none disabled:opacity-50"
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg text-white p-2.5 text-sm focus:border-emerald-500 outline-none disabled:opacity-50"
               value={selectedUnit}
               disabled={unitFilter !== 'ALL'}
               onChange={(e) => {
@@ -145,7 +152,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
           <div>
             <label className="block text-xs text-slate-400 mb-1">แผนงาน/โครงการ</label>
             <select
-              className="w-full bg-slate-900 border border-slate-600 rounded-lg text-white p-2.5 text-sm focus:border-emerald-500 outline-none"
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg text-white p-2.5 text-sm focus:border-emerald-500 outline-none"
               value={selectedProject}
               onChange={(e) => setSelectedProject(e.target.value)}
             >
@@ -163,7 +170,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             <div className="relative">
               <input
                 type="date"
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg text-white p-2.5 pl-10 text-sm focus:border-emerald-500 outline-none [color-scheme:dark]"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg text-white p-2.5 pl-10 text-sm focus:border-emerald-500 outline-none [color-scheme:dark]"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
               />
@@ -176,7 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             <div className="relative">
               <input
                 type="date"
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg text-white p-2.5 pl-10 text-sm focus:border-emerald-500 outline-none [color-scheme:dark]"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg text-white p-2.5 pl-10 text-sm focus:border-emerald-500 outline-none [color-scheme:dark]"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
@@ -241,7 +248,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
         <div className="lg:col-span-4 bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700 h-fit">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <PieChartIcon size={20} className="text-slate-400" />
-            สัดส่วนสถานะโครงการ
+            ภาพรวมสถานะ 
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -257,14 +264,14 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
                   dataKey="value"
                 >
                   {stats.statusCount.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name]} />
                   ))}
                 </Pie>
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
                   itemStyle={{ color: '#fff' }}
                 />
-                <Legend verticalAlign="bottom" height={36}/>
+                <Legend verticalAlign="bottom" height={80} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -277,7 +284,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             ความคืบหน้ารายโครงการ (ทั้งหมด)
           </h3>
           
-          {/* Scrollable container for many projects */}
           <div className="h-[500px] overflow-y-auto pr-2 custom-scrollbar border border-slate-700/50 rounded bg-slate-900/50">
             <div style={{ height: Math.max(480, stats.projectProgress.length * 50) }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -291,7 +297,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
                   <YAxis 
                     dataKey="name" 
                     type="category" 
-                    width={300} // Increased width for full names
+                    width={300} 
                     stroke="#94a3b8" 
                     fontSize={11} 
                     tick={{fill: '#cbd5e1'}}
@@ -329,10 +335,10 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400 justify-center">
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500"></span> 0-20% (วิกฤต/ต่ำกว่าเกณฑ์)</div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-yellow-500"></span> 21-50% (ระหว่างดำเนินการ)</div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-blue-500"></span> 51-90% (ดำเนินการต่อเนื่อง)</div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-emerald-500"></span> 91-100% (แล้วเสร็จ)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#ef4444]"></span> 0-20% (วิกฤต/ต่ำกว่าเกณฑ์)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#eab308]"></span> 21-50% (อยู่ระหว่างดำเนินการ)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#3b82f6]"></span> 51-90% (ดำเนินการต่อเนื่อง)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#10b981]"></span> 91-100% (แล้วเสร็จ)</div>
           </div>
         </div>
       </div>
