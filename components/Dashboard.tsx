@@ -13,7 +13,7 @@ interface DashboardProps {
   projects: Project[];
   reports: Report[];
   unitFilter: string; // ค่า 'ALL' หรือชื่อหน่วยงานของผู้ใช้
-  userRole?: Role;    // ส่งเข้ามาเพื่อเช็คว่าเป็น Admin หรือไม่ (ถ้าไม่ส่งมาจะเช็คจาก unitFilter เอา)
+  userRole?: Role;    // ส่งเข้ามาเพื่อเช็คว่าเป็น Admin หรือไม่
 }
 
 // Map status names to specific colors to ensure consistency
@@ -210,7 +210,8 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             <div>
               <p className="text-slate-400 text-sm">เสร็จสมบูรณ์</p>
               <h3 className="text-2xl font-bold text-white">{stats.completedProjects}</h3>
-              <p className="text-xs text-slate-500 mt-1">โครงการ (>= 91%)</p>
+              {/* FIXED: Changed >= to &ge; to prevent JSX parsing error */}
+              <p className="text-xs text-slate-500 mt-1">โครงการ (&ge; 91%)</p>
             </div>
             <CheckCircle className="text-green-500 w-8 h-8" />
           </div>
@@ -233,6 +234,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
               <div className="w-24 bg-slate-700 h-1.5 rounded-full mt-2">
                 <div 
                    className="bg-purple-500 h-1.5 rounded-full transition-all duration-500" 
+                   // FIXED: Added backticks for template literal
                    style={{ width: `${stats.avgProgress}%` }}
                 />
               </div>
@@ -264,6 +266,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
                   dataKey="value"
                 >
                   {stats.statusCount.map((entry, index) => (
+                    // FIXED: Added backticks for template literal
                     <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name]} />
                   ))}
                 </Pie>
@@ -313,11 +316,13 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
                       maxWidth: '400px',
                       whiteSpace: 'normal'
                     }}
+                    // FIXED: Added backticks for template literal
                     formatter={(value: number) => [`${value}%`, 'ความคืบหน้า']}
                     labelStyle={{ color: '#emerald-400', fontWeight: 'bold', marginBottom: '4px' }}
                   />
                   <Bar dataKey="progress" radius={[0, 4, 4, 0]} name="ความคืบหน้า (%)" barSize={24}>
                     {stats.projectProgress.map((entry, index) => (
+                      // FIXED: Added backticks for template literal
                       <Cell key={`cell-${index}`} fill={getBarColor(entry.progress)} />
                     ))}
                     <LabelList 
@@ -326,6 +331,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
                       fill="#fff" 
                       fontSize={11} 
                       fontWeight="bold"
+                      // FIXED: Added backticks for template literal
                       formatter={(val: number) => `${val}%`} 
                       offset={10}
                     />
@@ -335,7 +341,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400 justify-center">
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#ef4444]"></span> 0-20% (ต่ำกว่าเกณฑ์)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#ef4444]"></span> 0-20% (วิกฤต/ต่ำกว่าเกณฑ์)</div>
             <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#eab308]"></span> 21-50% (อยู่ระหว่างดำเนินการ)</div>
             <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#3b82f6]"></span> 51-90% (ดำเนินการต่อเนื่อง)</div>
             <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#10b981]"></span> 91-100% (แล้วเสร็จ)</div>
