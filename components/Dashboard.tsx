@@ -13,15 +13,16 @@ interface DashboardProps {
   projects: Project[];
   reports: Report[];
   unitFilter: string; // ค่า 'ALL' หรือชื่อหน่วยงานของผู้ใช้
-  userRole?: Role;    // ส่งเข้ามาเพื่อเช็คว่าเป็น Admin หรือไม่
+  userRole?: Role;    // ส่งเข้ามาเพื่อเช็คว่าเป็น Admin หรือไม่ (ถ้าไม่ส่งมาจะเช็คจาก unitFilter เอา)
 }
 
 // Map status names to specific colors to ensure consistency
 const STATUS_COLORS: Record<string, string> = {
-  'แล้วเสร็จ (91-100%)': '#10b981',      // Green
-  'ดำเนินงานต่อเนื่อง (51-90%)': '#3b82f6', // Blue
-  'อยู่ระหว่างดำเนินการ (21-50%)': '#eab308', // Yellow
-  'ต่ำกว่าเกณฑ์ (0-20%)': '#ef4444'   // Red
+  'เสร็จแล้ว (100%)': '#10b981',           // Green
+  'กำลังจะแล้วเสร็จ (91-99%)': '#0ea5e9',   // Sky Blue
+  'ดำเนินการต่อเนื่อง (51-90%)': '#a855f7', // Purple
+  'อยู่ระหว่างดำเนินการ (21-50%)': '#f97316', // Orange
+  'ต่ำกว่าเกณฑ์ (0-20%)': '#ef4444'        // Red
 };
 
 const UNITS = ["กนผ.สนผพ.กพ.ทหาร", "กกล.กพ.ทหาร", "กบพ.กพ.ทหาร", "กปค.กพ.ทหาร", "กจก.กพ.ทหาร", "กทด.สนผพ.กพ.ทหาร", "กพพ.กพ.ทหาร", "กพบท.กพ.ทหาร", "กคง.สนผพ.กพ.ทหาร"];
@@ -85,16 +86,17 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
       };
     });
 
-    const completedProjects = projectProgress.filter(p => p.progress >= 91).length;
+    const completedProjects = projectProgress.filter(p => p.progress === 100).length;
     
     const avgProgress = projectProgress.length > 0 
       ? projectProgress.reduce((acc, curr) => acc + curr.progress, 0) / projectProgress.length 
       : 0;
 
-    // Updated Status Count with 4 ranges
+    // Updated Status Count with 5 ranges
     const statusCount = [
-      { name: 'แล้วเสร็จ (91-100%)', value: projectProgress.filter(p => p.progress >= 91).length },
-      { name: 'ดำเนินงานต่อเนื่อง (51-90%)', value: projectProgress.filter(p => p.progress >= 51 && p.progress <= 90).length },
+      { name: 'เสร็จแล้ว (100%)', value: projectProgress.filter(p => p.progress === 100).length },
+      { name: 'กำลังจะแล้วเสร็จ (91-99%)', value: projectProgress.filter(p => p.progress >= 91 && p.progress <= 99).length },
+      { name: 'ดำเนินการต่อเนื่อง (51-90%)', value: projectProgress.filter(p => p.progress >= 51 && p.progress <= 90).length },
       { name: 'อยู่ระหว่างดำเนินการ (21-50%)', value: projectProgress.filter(p => p.progress >= 21 && p.progress <= 50).length },
       { name: 'ต่ำกว่าเกณฑ์ (0-20%)', value: projectProgress.filter(p => p.progress <= 20).length },
     ].filter(item => item.value > 0); // Only show statuses that have projects
@@ -115,10 +117,11 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
       : projects;
   }, [projects, selectedUnit]);
 
-  // Updated logic to match the 4-color request
+  // Updated logic to match the 5-color request
   const getBarColor = (p: number) => {
-    if (p >= 91) return STATUS_COLORS['แล้วเสร็จ (91-100%)'];
-    if (p >= 51) return STATUS_COLORS['ดำเนินงานต่อเนื่อง (51-90%)'];
+    if (p === 100) return STATUS_COLORS['เสร็จแล้ว (100%)'];
+    if (p >= 91) return STATUS_COLORS['กำลังจะแล้วเสร็จ (91-99%)'];
+    if (p >= 51) return STATUS_COLORS['ดำเนินการต่อเนื่อง (51-90%)'];
     if (p >= 21) return STATUS_COLORS['อยู่ระหว่างดำเนินการ (21-50%)'];
     return STATUS_COLORS['ต่ำกว่าเกณฑ์ (0-20%)'];
   };
@@ -210,8 +213,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             <div>
               <p className="text-slate-400 text-sm">เสร็จสมบูรณ์</p>
               <h3 className="text-2xl font-bold text-white">{stats.completedProjects}</h3>
-              {/* FIXED: Changed >= to &ge; to prevent JSX parsing error */}
-              <p className="text-xs text-slate-500 mt-1">โครงการ (&ge; 91%)</p>
+              <p className="text-xs text-slate-500 mt-1">โครงการ (100%)</p>
             </div>
             <CheckCircle className="text-green-500 w-8 h-8" />
           </div>
@@ -234,7 +236,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
               <div className="w-24 bg-slate-700 h-1.5 rounded-full mt-2">
                 <div 
                    className="bg-purple-500 h-1.5 rounded-full transition-all duration-500" 
-                   // FIXED: Added backticks for template literal
                    style={{ width: `${stats.avgProgress}%` }}
                 />
               </div>
@@ -266,7 +267,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
                   dataKey="value"
                 >
                   {stats.statusCount.map((entry, index) => (
-                    // FIXED: Added backticks for template literal
                     <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name]} />
                   ))}
                 </Pie>
@@ -316,13 +316,11 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
                       maxWidth: '400px',
                       whiteSpace: 'normal'
                     }}
-                    // FIXED: Added backticks for template literal
                     formatter={(value: number) => [`${value}%`, 'ความคืบหน้า']}
                     labelStyle={{ color: '#emerald-400', fontWeight: 'bold', marginBottom: '4px' }}
                   />
                   <Bar dataKey="progress" radius={[0, 4, 4, 0]} name="ความคืบหน้า (%)" barSize={24}>
                     {stats.projectProgress.map((entry, index) => (
-                      // FIXED: Added backticks for template literal
                       <Cell key={`cell-${index}`} fill={getBarColor(entry.progress)} />
                     ))}
                     <LabelList 
@@ -331,7 +329,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
                       fill="#fff" 
                       fontSize={11} 
                       fontWeight="bold"
-                      // FIXED: Added backticks for template literal
                       formatter={(val: number) => `${val}%`} 
                       offset={10}
                     />
@@ -341,10 +338,11 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, reports, unitFilter, us
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400 justify-center">
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#ef4444]"></span> 0-20% (วิกฤต/ต่ำกว่าเกณฑ์)</div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#eab308]"></span> 21-50% (อยู่ระหว่างดำเนินการ)</div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#3b82f6]"></span> 51-90% (ดำเนินการต่อเนื่อง)</div>
-            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#10b981]"></span> 91-100% (แล้วเสร็จ)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#ef4444]"></span> 0-20% (ต่ำกว่าเกณฑ์)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#f97316]"></span> 21-50% (อยู่ระหว่างดำเนินการ)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#a855f7]"></span> 51-90% (ดำเนินการต่อเนื่อง)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#0ea5e9]"></span> 91-99% (กำลังจะแล้วเสร็จ)</div>
+            <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-[#10b981]"></span> 100% (เสร็จแล้ว)</div>
           </div>
         </div>
       </div>
